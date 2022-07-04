@@ -1,0 +1,27 @@
+#! /bin/python3
+
+import re, zipfile, os
+
+def okzip(root, file):
+    """
+    Décide si un couple root, file peut être zippé
+    """
+    return not ".git" in root and \
+        not file.startswith(".git") and \
+        not file.endswith("~")
+
+if __name__=="__main__":
+    with open("plugin.info.txt") as infile:
+        date = "".join([re.sub(r"^date\s*(.*)", r"\1",l.strip())
+                        for l in infile.readlines()
+                        if re.match(r"^date\s*(.*)", l)])
+    print(date)
+    zipFilename = f"/tmp/dokuwiki-plugin-odt-{date}"
+    with zipfile.ZipFile(zipFilename, 'w') as myzip:
+        for root, dirs, files in os.walk('.'):
+            newroot = re.sub(r"^\.",f"dokuwiki-plugin-odt-{date}", root)
+            for file in files:
+                if okzip(root,file):
+                    myzip.write(os.path.join(root, file),
+                                os.path.join(newroot, file))
+    print(f"created {zipFilename}")
